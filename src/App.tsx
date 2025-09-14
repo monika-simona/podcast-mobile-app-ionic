@@ -32,6 +32,7 @@ import '@ionic/react/css/palettes/dark.system.css';
 
 /* Theme variables */
 import './theme/variables.css';
+import PodcastDetails from './pages/PodcastDetails';
 
 setupIonicReact();
 
@@ -44,6 +45,9 @@ const App: React.FC = () => (
         </Route>
         <Route exact path="/">
           <Redirect to="/home" />
+        </Route>
+        <Route exact path="podcast"> 
+          <PodcastDetails />
         </Route>
       </IonRouterOutlet>
     </IonReactRouter>
