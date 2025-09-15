@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import {
   IonPage,
   IonHeader,
@@ -11,25 +12,39 @@ import {
   IonSelect,
   IonSelectOption,
   IonButton,
+  IonSpinner,
 } from "@ionic/react";
 import PodcastCard from "../components/PodcastCard";
-import { podcasts as allPodcasts } from "../data/dummyData";
+import { usePodcasts, Podcast } from "../hooks/usePodcasts";
 import { useHistory } from "react-router-dom";
-import { useState } from "react";
 
 const Home: React.FC = () => {
   const history = useHistory();
 
-  // Filter state
-  const [query, setQuery] = useState("");
+  // Kontrolisani elementi
+  const [searchText, setSearchText] = useState("");
   const [filterBy, setFilterBy] = useState<"title" | "author">("title");
 
-  // Filtrirani podcasti
-  const filteredPodcasts = allPodcasts.filter((podcast) =>
-    filterBy === "title"
-      ? podcast.title.toLowerCase().includes(query.toLowerCase())
-      : podcast.author.toLowerCase().includes(query.toLowerCase())
-  );
+  // Stanje za aktivnu pretragu (koja se šalje hook-u)
+  const [activeQuery, setActiveQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState<"title" | "author">("title");
+
+  // Hook za podkaste sa backend-a
+  const { podcasts, loading, error } = usePodcasts(activeQuery, activeFilter);
+
+  // Dugme Search postavlja activeQuery i activeFilter
+  const handleSearch = () => {
+    setActiveQuery(searchText);
+    setActiveFilter(filterBy);
+  };
+
+  // Dugme Reset
+  const handleReset = () => {
+    setSearchText("");
+    setFilterBy("title");
+    setActiveQuery("");
+    setActiveFilter("title");
+  };
 
   return (
     <IonPage>
@@ -45,9 +60,8 @@ const Home: React.FC = () => {
             placeholder={
               filterBy === "title" ? "Pretraži po nazivu" : "Pretraži po autoru"
             }
-            value={query}
-            onIonChange={(e) => setQuery(e.detail.value!)}
-            style={{ flex: 1 }}
+            value={searchText}
+            onIonChange={(e) => setSearchText(e.detail.value!)}
           />
           <IonSelect
             value={filterBy}
@@ -57,24 +71,30 @@ const Home: React.FC = () => {
             <IonSelectOption value="title">Naziv</IonSelectOption>
             <IonSelectOption value="author">Autor</IonSelectOption>
           </IonSelect>
-          <IonButton onClick={() => setQuery("")}>Reset</IonButton>
+          <IonButton onClick={handleSearch}>Search</IonButton>
+          <IonButton onClick={handleReset}>Reset</IonButton>
         </div>
+
+        {/* Loading/Error */}
+        {loading && <IonSpinner name="crescent" />}
+        {error && <p style={{ color: "red" }}>{error}</p>}
 
         {/* Lista podcasta */}
         <IonGrid>
           <IonRow>
-            {filteredPodcasts.length > 0 ? (
-              filteredPodcasts.map((podcast) => (
-                <IonCol size="12" sizeMd="6" key={podcast.id}>
-                  <PodcastCard
-                    podcast={podcast}
-                    onViewDetails={(id) => history.push(`/podcasts/${id}`)}
-                  />
-                </IonCol>
-              ))
-            ) : (
+            {!loading && podcasts.length === 0 && (
               <p>Nema podcasta za prikaz</p>
             )}
+            {podcasts.map((podcast: Podcast) => (
+              <IonCol size="12" sizeMd="6" key={podcast.id}>
+                <PodcastCard
+                  podcast={podcast}
+                  onViewDetails={(id: number) =>
+                    history.push(`/podcasts/${id}`)
+                  }
+                />
+              </IonCol>
+            ))}
           </IonRow>
         </IonGrid>
       </IonContent>
