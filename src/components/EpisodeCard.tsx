@@ -1,3 +1,4 @@
+import React from "react";
 import {
   IonCard,
   IonCardHeader,
@@ -5,21 +6,15 @@ import {
   IonCardContent,
   IonButton,
 } from "@ionic/react";
-import { Episode } from "../data/dummyData";
-import { useState } from "react";
+import { Episode, useAudioPlayer } from "../context/AudioPlayerContext";
 
 interface Props {
   episode: Episode;
-  onPlay: (episode: Episode) => void;
 }
 
-const EpisodeCard: React.FC<Props> = ({ episode, onPlay }) => {
-  const [expanded, setExpanded] = useState(false);
-  const maxLength = 100;
-  const desc =
-    !expanded && episode.description?.length > maxLength
-      ? episode.description.slice(0, maxLength) + "..."
-      : episode.description;
+const EpisodeCard: React.FC<Props> = ({ episode }) => {
+  const { currentEpisode, playEpisode, stopEpisode } = useAudioPlayer();
+  const isCurrent = currentEpisode?.id === episode.id;
 
   return (
     <IonCard>
@@ -27,18 +22,26 @@ const EpisodeCard: React.FC<Props> = ({ episode, onPlay }) => {
         <IonCardTitle>{episode.title}</IonCardTitle>
       </IonCardHeader>
       <IonCardContent>
-        <p>
-          {desc}{" "}
-          {episode.description && episode.description.length > maxLength && (
-            <span
-              style={{ color: "#3880ff", cursor: "pointer" }}
-              onClick={() => setExpanded(!expanded)}
-            >
-              {expanded ? "Collapse" : "Read more"}
-            </span>
-          )}
-        </p>
-        <IonButton onClick={() => onPlay(episode)}>Play</IonButton>
+        <p>{episode.description}</p>
+
+        {episode.release_date && (
+          <p>
+            <strong>Datum objave:</strong>{" "}
+            {new Date(episode.release_date).toLocaleDateString()}
+          </p>
+        )}
+
+        {episode.duration && (
+          <p>
+            <strong>Trajanje:</strong> {episode.duration} min
+          </p>
+        )}
+
+        {!isCurrent ? (
+          <IonButton onClick={() => playEpisode(episode)}>▶️ Play</IonButton>
+        ) : (
+          <IonButton onClick={stopEpisode}>Stop</IonButton>
+        )}
       </IonCardContent>
     </IonCard>
   );

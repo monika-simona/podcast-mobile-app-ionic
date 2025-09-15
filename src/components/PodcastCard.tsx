@@ -6,7 +6,14 @@ import {
   IonImg,
   IonCardContent,
 } from "@ionic/react";
-import { Podcast } from "../data/dummyData";
+
+export interface Podcast {
+  id: number;
+  title: string;
+  author: string;
+  description?: string;
+  cover_image_url?: string; // koristi se URL iz backenda
+}
 
 interface Props {
   podcast: Podcast;
@@ -16,12 +23,14 @@ interface Props {
 const PodcastCard: React.FC<Props> = ({ podcast, onViewDetails }) => {
   return (
     <IonCard button onClick={() => onViewDetails(podcast.id)}>
-      <IonImg src={podcast.cover_image_url || "/default-cover.png"} />
       <IonCardHeader>
         <IonCardTitle>{podcast.title}</IonCardTitle>
         <IonCardSubtitle>{podcast.author}</IonCardSubtitle>
       </IonCardHeader>
-      <IonCardContent>{podcast.description?.slice(0, 60)}...</IonCardContent>
+
+      <IonCardContent>
+        {podcast.description ? podcast.description.slice(0, 60) + "..." : ""}
+      </IonCardContent>
     </IonCard>
   );
 };
