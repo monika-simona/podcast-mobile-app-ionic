@@ -1,35 +1,65 @@
+import React, { useContext } from "react";
 import {
   IonCard,
   IonCardHeader,
   IonCardTitle,
-  IonCardSubtitle,
-  IonImg,
   IonCardContent,
+  IonButton,
 } from "@ionic/react";
+import { AuthContext } from "../context/AuthContext";
 
 export interface Podcast {
   id: number;
   title: string;
-  author: string;
   description?: string;
-  cover_image_url?: string; // koristi se URL iz backenda
+  author: string; // ostaje string
+  user_id: number;
+  cover_image_url?: string;
 }
 
-interface Props {
+interface PodcastCardProps {
   podcast: Podcast;
-  onViewDetails: (id: number) => void;
+  children?: React.ReactNode;
+  onViewDetails?: (id: number) => void;
+  showEpisodesButton?: boolean;
 }
 
-const PodcastCard: React.FC<Props> = ({ podcast, onViewDetails }) => {
+const PodcastCard: React.FC<PodcastCardProps> = ({
+  podcast,
+  children,
+  showEpisodesButton,
+  onViewDetails,
+}) => {
+  const { user } = useContext(AuthContext);
+  const isAuthor = user && user.id === podcast.user_id;
+
   return (
-    <IonCard button onClick={() => onViewDetails(podcast.id)}>
+    <IonCard
+      button={!showEpisodesButton} // klikabilna na Home
+      onClick={
+        !showEpisodesButton && onViewDetails
+          ? () => onViewDetails(podcast.id)
+          : undefined
+      }
+    >
       <IonCardHeader>
         <IonCardTitle>{podcast.title}</IonCardTitle>
-        <IonCardSubtitle>{podcast.author}</IonCardSubtitle>
+        <p>Autor: {podcast.author}</p>
       </IonCardHeader>
-
       <IonCardContent>
-        {podcast.description ? podcast.description.slice(0, 60) + "..." : ""}
+        <p>{podcast.description}</p>
+        {children}
+        {showEpisodesButton && onViewDetails && (
+          <IonButton
+            fill="outline"
+            onClick={(e) => {
+              e.stopPropagation(); // spreči klik na celu karticu
+              onViewDetails(podcast.id);
+            }}
+          >
+            Prikaži epizode
+          </IonButton>
+        )}
       </IonCardContent>
     </IonCard>
   );

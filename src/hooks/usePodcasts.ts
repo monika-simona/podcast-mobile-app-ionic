@@ -31,7 +31,19 @@ export const usePodcasts = (
       const res = await axios.get("http://127.0.0.1:8000/api/podcasts", {
         params,
       });
-      setPodcasts(res.data.data); // Assuming backend vraća paginaciju
+      const data = res.data.data || res.data;
+
+      setPodcasts(
+        data.map((p: any) => ({
+          id: p.id,
+          title: p.title,
+          description: p.description || "Bez opisa",
+          author: p.author?.name || "Nepoznat", // MAPIRAMO U STRING
+          user_id: p.user_id,
+          created_at: p.created_at,
+          updated_at: p.updated_at,
+        }))
+      );
       setError(null);
     } catch (err: any) {
       setError(err.message || "Greška pri učitavanju podcasta");
