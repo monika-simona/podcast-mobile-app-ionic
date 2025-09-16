@@ -28,6 +28,7 @@ const Register: React.FC = () => {
       history.push("/login");
     } catch (err) {
       console.error(err);
+      alert("Došlo je do greške prilikom registrovanja. Proverite unesene podatke.");
     }
   };
 

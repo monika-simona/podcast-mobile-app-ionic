@@ -32,7 +32,12 @@ const NavBar: React.FC = () => {
           {/* Prijava / Logout */}
           <IonButtons slot="end">
             {user ? (
-              <IonButton onClick={logout}>{user.name} (Logout)</IonButton>
+              <>
+                <IonLabel>{user.name}</IonLabel>{" "}
+                <IonButton onClick={logout} routerLink="/home">
+                  Logout
+                </IonButton>
+              </>
             ) : (
               <>
                 <IonButton routerLink="/login">Login</IonButton>

@@ -25,6 +25,7 @@ const Login: React.FC = () => {
       history.push("/home"); // ili "/stations" ako želiš odmah na dashboard
     } catch (err) {
       console.error(err);
+      alert("Došlo je do greške prilikom logovanja. Proverite unesene podatke.");
     }
   };
 
