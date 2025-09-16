@@ -47,6 +47,7 @@ const AddPodcastForm: React.FC<AddPodcastFormProps> = ({
       setTitle("");
       setDescription("");
       onClose();
+      
     } catch (err: any) {
       console.error(err);
       setError(

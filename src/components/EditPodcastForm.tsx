@@ -12,11 +12,16 @@ import {
 } from "@ionic/react";
 import api from "../api";
 import { Podcast } from "../components/PodcastCard";
+import { Episode } from "../context/AudioPlayerContext";
 
 interface EditPodcastFormProps {
   podcast: Podcast;
   onClose: () => void;
   setPodcasts: React.Dispatch<React.SetStateAction<Podcast[]>>;
+}
+
+export interface EditableEpisode extends Episode {
+  podcast_id: number;
 }
 
 const EditPodcastForm: React.FC<EditPodcastFormProps> = ({

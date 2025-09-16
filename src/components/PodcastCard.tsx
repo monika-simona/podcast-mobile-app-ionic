@@ -122,9 +122,7 @@ const PodcastCard: React.FC<PodcastCardProps> = ({
                   onAddEpisode(podcast.id);
                 }}
               >
-                {selectedPodcastId === podcast.id
-                  ? "Odustani"
-                  : "Dodaj epizodu"}
+                Dodaj epizodu
               </IonButton>
             )}
           </>
