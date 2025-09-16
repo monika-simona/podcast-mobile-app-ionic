@@ -35,10 +35,9 @@ const MyPodcastsPage: React.FC = () => {
 
   const [episodeFormOpenForPodcastId, setEpisodeFormOpenForPodcastId] =
     useState<number | null>(null);
-
   const [episodesList, setEpisodesList] = useState<any[]>([]);
 
-  // 👇 state za edit
+  // 👇 state za edit podkasta
   const [editingPodcast, setEditingPodcast] = useState<Podcast | null>(null);
 
   useEffect(() => {
@@ -55,6 +54,7 @@ const MyPodcastsPage: React.FC = () => {
     setEpisodesList(episodes ?? []);
   }, [episodes]);
 
+  // --- Handleri ---
   const handleAddEpisode = (podcastId: number) => {
     setEpisodeFormOpenForPodcastId(
       episodeFormOpenForPodcastId === podcastId ? null : podcastId
@@ -69,13 +69,11 @@ const MyPodcastsPage: React.FC = () => {
 
   const handlePodcastCreated = (newPodcast: Podcast) => {
     setPodcasts((prev) => [newPodcast, ...prev]);
-    window.location.reload();
     setEpisodeFormOpenForPodcastId(newPodcast.id);
     setSelectedPodcastId(newPodcast.id);
     setShowAddForm(false);
   };
 
-  // ✅ DELETE podcast
   const handleDeletePodcast = async (id: number) => {
     if (!window.confirm("Da li si sigurna da želiš da obrišeš podkast?"))
       return;
@@ -86,6 +84,23 @@ const MyPodcastsPage: React.FC = () => {
       console.error(err);
       alert("Greška prilikom brisanja podkasta.");
     }
+  };
+
+  const handleDeleteEpisode = async (id: number) => {
+    if (!window.confirm("Da li želiš da obrišeš ovu epizodu?")) return;
+    try {
+      await api.delete(`/episodes/${id}`);
+      setEpisodesList((prev) => prev.filter((e) => e.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Greška prilikom brisanja epizode.");
+    }
+  };
+
+  const handleUpdateEpisode = (updated: any) => {
+    setEpisodesList((prev) =>
+      prev.map((e) => (e.id === updated.id ? updated : e))
+    );
   };
 
   return (
@@ -127,12 +142,12 @@ const MyPodcastsPage: React.FC = () => {
                   }
                   onAddEpisode={handleAddEpisode}
                   isEpisodeFormOpen={episodeFormOpenForPodcastId === podcast.id}
-                  isMyPodcastsPage={true} 
-                  onEditPodcast={(p) => setEditingPodcast(p)} 
-                  onDeletePodcast={handleDeletePodcast} 
+                  isMyPodcastsPage={true}
+                  onEditPodcast={(p) => setEditingPodcast(p)}
+                  onDeletePodcast={handleDeletePodcast}
                 />
 
-                {/*  Edit forma ispod odabranog podkasta */}
+                {/* Edit forma podkasta */}
                 {editingPodcast && editingPodcast.id === podcast.id && (
                   <EditPodcastForm
                     podcast={editingPodcast}
@@ -141,6 +156,7 @@ const MyPodcastsPage: React.FC = () => {
                   />
                 )}
 
+                {/* AddEpisodeForm */}
                 {episodeFormOpenForPodcastId === podcast.id && (
                   <div style={{ marginLeft: "20px", marginTop: "10px" }}>
                     <AddEpisodeForm
@@ -153,13 +169,20 @@ const MyPodcastsPage: React.FC = () => {
                   </div>
                 )}
 
+                {/* Lista epizoda */}
                 {selectedPodcastId === podcast.id && (
                   <div style={{ marginLeft: "20px", marginTop: "10px" }}>
                     {episodesLoading ? (
                       <IonSpinner name="crescent" />
                     ) : episodesList.length > 0 ? (
                       episodesList.map((ep) => (
-                        <EpisodeCard key={ep.id} episode={ep} />
+                        <EpisodeCard
+                          key={ep.id}
+                          episode={ep}
+                          isMyPodcastsPage={true}
+                          onUpdated={handleUpdateEpisode}
+                          onDeleted={handleDeleteEpisode}
+                        />
                       ))
                     ) : (
                       <IonText>Nema epizoda za prikaz</IonText>

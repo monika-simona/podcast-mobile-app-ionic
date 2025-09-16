@@ -4,30 +4,30 @@ import {
   IonCardHeader,
   IonCardTitle,
   IonCardContent,
+  IonButton,
   IonInput,
   IonTextarea,
-  IonButton,
   IonItem,
   IonLabel,
   IonDatetime,
 } from "@ionic/react";
 import api from "../api";
-import { Podcast } from "../components/PodcastCard";
+import { Episode } from "../context/AudioPlayerContext";
 
-interface AddEpisodeFormProps {
-  podcast: Podcast;
+interface EditEpisodeFormProps {
+  episode: Episode;
   onClose: () => void;
-  onCreated: (newEpisode: any) => void;
+  onUpdated: (updated: Episode) => void; // OVO je novo
 }
 
-const AddEpisodeForm: React.FC<AddEpisodeFormProps> = ({
-  podcast,
+const EditEpisodeForm: React.FC<EditEpisodeFormProps> = ({
+  episode,
   onClose,
-  onCreated,
+  onUpdated,
 }) => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [releaseDate, setReleaseDate] = useState("");
+  const [title, setTitle] = useState(episode.title);
+  const [description, setDescription] = useState(episode.description || "");
+  const [releaseDate, setReleaseDate] = useState(episode.release_date || "");
   const [audio, setAudio] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,64 +35,37 @@ const AddEpisodeForm: React.FC<AddEpisodeFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!title.trim()) {
-      setError("Naziv epizode je obavezan.");
-      return;
-    }
-
-    if (!audio) {
-      setError("Audio fajl je obavezan.");
-      return;
-    }
-
-    const allowedTypes = ["audio/mpeg", "audio/wav"];
-    if (!allowedTypes.includes(audio.type)) {
-      setError("Dozvoljeni formati su mp3 i wav.");
-      return;
-    }
-
-    const maxSize = 40 * 1024 * 1024; // 40MB
-    if (audio.size > maxSize) {
-      setError("Audio fajl ne može biti veći od 40MB.");
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("description", description);
-    formData.append("podcast_id", podcast.id.toString());
-    if (releaseDate) formData.append("release_date", releaseDate);
-    formData.append("audio", audio);
-
     try {
-      const res = await api.post("/episodes", formData, {
+      const formData = new FormData();
+      formData.append("_method", "PUT");
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("release_date", releaseDate);
+      if (audio) formData.append("audio", audio);
+
+      const res = await api.post(`/episodes/${episode.id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      onCreated(res.data); // odmah dodaje epizodu u listu
-      setTitle("");
-      setDescription("");
-      setReleaseDate("");
-      setAudio(null);
+
+      const updatedEpisode = res.data; // prilagodi ako je res.data.data
+      onUpdated(updatedEpisode); // POZOVI onUpdated
       onClose();
       window.location.reload();
     } catch (err: any) {
       console.error(err);
-      setError(
-        err.response?.data?.message ||
-          "Došlo je do greške pri dodavanju epizode."
-      );
+      setError("Došlo je do greške prilikom izmene epizode.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <IonCard style={{ marginBottom: "15px" }}>
+    <IonCard style={{ marginTop: "10px" }}>
       <IonCardHeader>
-        <IonCardTitle>Dodaj epizodu za: {podcast.title}</IonCardTitle>
+        <IonCardTitle>Izmeni epizodu</IonCardTitle>
       </IonCardHeader>
       <IonCardContent>
         {error && <p style={{ color: "red" }}>{error}</p>}
@@ -101,26 +74,26 @@ const AddEpisodeForm: React.FC<AddEpisodeFormProps> = ({
           <IonLabel position="stacked">Naziv epizode</IonLabel>
           <IonInput
             value={title}
-            placeholder="Unesite naziv epizode"
             onIonChange={(e) => setTitle(e.detail.value!)}
           />
         </IonItem>
 
         <IonItem>
-          <IonLabel position="stacked">Opis epizode (opciono)</IonLabel>
+          <IonLabel position="stacked">Opis epizode</IonLabel>
           <IonTextarea
             value={description}
-            placeholder="Unesite opis epizode"
             onIonChange={(e) => setDescription(e.detail.value!)}
           />
         </IonItem>
 
         <IonItem>
-          <IonLabel position="stacked">Datum izlaska (opciono)</IonLabel>
+          <IonLabel position="stacked">Datum izlaska</IonLabel>
           <IonDatetime
             presentation="date"
             value={releaseDate}
-            onIonChange={(e) => setReleaseDate(e.detail.value as string)}
+            onIonChange={(e) =>
+              setReleaseDate((e.detail.value as string) || "")
+            }
           />
         </IonItem>
 
@@ -142,7 +115,7 @@ const AddEpisodeForm: React.FC<AddEpisodeFormProps> = ({
           onClick={handleSubmit}
           disabled={loading}
         >
-          {loading ? "Dodavanje..." : "Dodaj epizodu"}
+          {loading ? "Sačuvaj..." : "Sačuvaj izmene"}
         </IonButton>
 
         <IonButton
@@ -158,4 +131,4 @@ const AddEpisodeForm: React.FC<AddEpisodeFormProps> = ({
   );
 };
 
-export default AddEpisodeForm;
+export default EditEpisodeForm;

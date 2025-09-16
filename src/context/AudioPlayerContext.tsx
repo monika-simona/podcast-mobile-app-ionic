@@ -16,6 +16,7 @@ export interface Episode {
   audio_url: string;
   duration?: string | number; // trajanje u sekundama ili minutima
   release_date?: string; // ISO datum
+   podcast_id: number;
 }
 
 // Tip konteksta
