@@ -10,6 +10,7 @@ import Home from "./pages/Home";
 import PodcastDetails from "./pages/PodcastDetails";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import MyPodcasts from "./pages/MyPodcasts";
 
 /* Components */
 import NavBar from "./components/NavBar";
@@ -47,6 +48,7 @@ const App: React.FC = () => {
                 <Route exact path="/login" component={Login} />
                 <Route exact path="/register" component={Register} />
                 <Route exact path="/podcasts/:id" component={PodcastDetails} />
+                <Route exact path="/my-podcasts" component={MyPodcasts} />
                 {/* Default route */}
                 <Route exact path="/" render={() => <Redirect to="/home" />} />
               </IonRouterOutlet>

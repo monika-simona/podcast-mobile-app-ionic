@@ -71,6 +71,7 @@ const Home: React.FC = () => {
             <IonSelectOption value="title">Naziv</IonSelectOption>
             <IonSelectOption value="author">Autor</IonSelectOption>
           </IonSelect>
+          <IonInput type="text"></IonInput>
           <IonButton onClick={handleSearch}>Search</IonButton>
           <IonButton onClick={handleReset}>Reset</IonButton>
         </div>

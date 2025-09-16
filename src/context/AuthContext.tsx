@@ -5,7 +5,7 @@ interface User {
   id: number;
   name: string;
   email: string;
-  role?: string;
+  role: "user" | "author" | "admin";
 }
 
 interface AuthContextType {
@@ -15,7 +15,8 @@ interface AuthContextType {
     name: string,
     email: string,
     password: string,
-    password_confirmation: string
+    password_confirmation: string,
+    role?: "user" | "author"
   ) => Promise<void>;
   logout: () => void;
 }
@@ -27,78 +28,86 @@ export const AuthContext = createContext<AuthContextType>({
   logout: () => {},
 });
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
-  const [user, setUser] = useState<User | null>(null);
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
-  // Auto login iz tokena
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loadingUser, setLoadingUser] = useState(true);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+
     if (token) {
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      api
-        .get("/user")
-        .then((res) => setUser(res.data))
-        .catch(() => {
-          localStorage.removeItem("token");
-        });
+
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+        setLoadingUser(false);
+      } else {
+        api
+          .get("/user")
+          .then((res) => {
+            setUser(res.data);
+            localStorage.setItem("user", JSON.stringify(res.data));
+          })
+          .catch(() => {
+            localStorage.removeItem("token");
+            setUser(null);
+          })
+          .finally(() => setLoadingUser(false));
+      }
+    } else {
+      setLoadingUser(false);
     }
   }, []);
 
   const login = async (email: string, password: string) => {
-    try {
-      const res = await api.post("/login", { email, password });
-      const token = res.data.access_token; // ispravno čitanje tokena
-      localStorage.setItem("token", token);
-      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      setUser(res.data.user);
-    } catch (err: any) {
-      console.error("Greška pri login-u", err);
-      if (err.response && err.response.status === 401) {
-        alert("Neispravan email ili lozinka");
-      } else {
-        alert("Greška pri login-u");
-      }
-      throw err;
-    }
+    const res = await api.post("/login", { email, password });
+    const token = res.data.access_token;
+    const userData = res.data.user;
+
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(userData));
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    setUser(userData);
   };
 
   const register = async (
     name: string,
     email: string,
     password: string,
-    password_confirmation: string
+    password_confirmation: string,
+    role: "user" | "author" = "user"
   ) => {
-    try {
-      const res = await api.post("/register", {
-        name,
-        email,
-        password,
-        password_confirmation,
-      });
-      const token = res.data.access_token;
-      localStorage.setItem("token", token);
-      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      setUser(res.data.user);
-    } catch (err: any) {
-      console.error("Greška pri registraciji", err);
-      if (err.response) {
-        alert(err.response.data.message || "Greška pri registraciji");
-      }
-      throw err;
-    }
+    const res = await api.post("/register", {
+      name,
+      email,
+      password,
+      password_confirmation,
+      role,
+    });
+    const token = res.data.access_token;
+    const userData = res.data.user;
+
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(userData));
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    setUser(userData);
   };
 
   const logout = () => {
     localStorage.removeItem("token");
-    setUser(null);
+    localStorage.removeItem("user");
     delete api.defaults.headers.common["Authorization"];
+    setUser(null);
   };
 
   return (
     <AuthContext.Provider value={{ user, login, register, logout }}>
-      {children}
+      {!loadingUser && children}
     </AuthContext.Provider>
   );
 };
