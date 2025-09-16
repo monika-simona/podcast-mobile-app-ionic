@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import {
   IonPage,
   IonContent,
@@ -7,54 +7,158 @@ import {
   IonCol,
   IonSpinner,
   IonText,
+  IonButton,
 } from "@ionic/react";
 import { AuthContext } from "../context/AuthContext";
 import PodcastCard, { Podcast } from "../components/PodcastCard";
 import EpisodeCard from "../components/EpisodeCard";
 import { useMyPodcasts } from "../hooks/useMyPodcasts";
 import { useEpisodes } from "../hooks/useEpisodes";
+import AddPodcastForm from "../components/AddPodcastForm";
+import AddEpisodeForm from "../components/AddEpisodeForm";
+import EditPodcastForm from "../components/EditPodcastForm";
+import api from "../api";
 
 const MyPodcastsPage: React.FC = () => {
   const { user } = useContext(AuthContext);
-  const { podcasts, loading, error } = useMyPodcasts();
+  const { podcasts: fetchedPodcasts, loading, error } = useMyPodcasts();
 
+  const [podcasts, setPodcasts] = useState<Podcast[]>([]);
   const [selectedPodcastId, setSelectedPodcastId] = useState<number | null>(
     null
   );
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const { episodes, loading: episodesLoading } = useEpisodes(
     selectedPodcastId || undefined
   );
 
+  const [episodeFormOpenForPodcastId, setEpisodeFormOpenForPodcastId] =
+    useState<number | null>(null);
+
+  const [episodesList, setEpisodesList] = useState<any[]>([]);
+
+  // 👇 state za edit
+  const [editingPodcast, setEditingPodcast] = useState<Podcast | null>(null);
+
+  useEffect(() => {
+    if (
+      podcasts.length === 0 &&
+      fetchedPodcasts &&
+      fetchedPodcasts.length > 0
+    ) {
+      setPodcasts(fetchedPodcasts);
+    }
+  }, [fetchedPodcasts, podcasts.length]);
+
+  useEffect(() => {
+    setEpisodesList(episodes ?? []);
+  }, [episodes]);
+
+  const handleAddEpisode = (podcastId: number) => {
+    setEpisodeFormOpenForPodcastId(
+      episodeFormOpenForPodcastId === podcastId ? null : podcastId
+    );
+  };
+
+  const handleEpisodeCreated = (newEpisode: any, forPodcastId?: number) => {
+    setEpisodesList((prev) => [newEpisode, ...prev]);
+    if (forPodcastId) setEpisodeFormOpenForPodcastId(null);
+    setSelectedPodcastId(newEpisode.podcast_id ?? forPodcastId ?? null);
+  };
+
+  const handlePodcastCreated = (newPodcast: Podcast) => {
+    setPodcasts((prev) => [newPodcast, ...prev]);
+    window.location.reload();
+    setEpisodeFormOpenForPodcastId(newPodcast.id);
+    setSelectedPodcastId(newPodcast.id);
+    setShowAddForm(false);
+  };
+
+  // ✅ DELETE podcast
+  const handleDeletePodcast = async (id: number) => {
+    if (!window.confirm("Da li si sigurna da želiš da obrišeš podkast?"))
+      return;
+    try {
+      await api.delete(`/podcasts/${id}`);
+      setPodcasts((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Greška prilikom brisanja podkasta.");
+    }
+  };
+
   return (
     <IonPage>
-      <IonContent className="ion-padding">
+      <IonContent
+        className="ion-padding"
+        style={{ "--padding-top": "70px" } as React.CSSProperties}
+      >
         <h2>Moji podkasti</h2>
 
         {loading && <IonSpinner name="crescent" />}
         {error && <IonText color="danger">{error}</IonText>}
 
+        <IonButton
+          color="primary"
+          style={{ marginBottom: "15px", width: "auto" }}
+          onClick={() => setShowAddForm(!showAddForm)}
+        >
+          {showAddForm ? "Zatvori formu" : "Dodaj novi podkast"}
+        </IonButton>
+
+        {showAddForm && (
+          <AddPodcastForm
+            onClose={() => setShowAddForm(false)}
+            onCreated={handlePodcastCreated}
+          />
+        )}
+
         <IonGrid>
-          <IonRow>
-            {!loading && podcasts.length === 0 && (
-              <IonText>Nema podkasta za prikaz</IonText>
-            )}
-            {podcasts.map((podcast: Podcast) => (
-              <IonCol size="12" sizeMd="6" key={podcast.id}>
+          {podcasts.map((podcast) => (
+            <IonRow key={podcast.id}>
+              <IonCol size="12">
                 <PodcastCard
                   podcast={podcast}
                   showEpisodesButton={true}
-                  onViewDetails={(id: number) => {
-                    // toggle prikaz epizoda
-                    setSelectedPodcastId(selectedPodcastId === id ? null : id);
-                  }}
+                  selectedPodcastId={selectedPodcastId}
+                  onViewDetails={(id: number) =>
+                    setSelectedPodcastId(selectedPodcastId === id ? null : id)
+                  }
+                  onAddEpisode={handleAddEpisode}
+                  isEpisodeFormOpen={episodeFormOpenForPodcastId === podcast.id}
+                  isMyPodcastsPage={true} 
+                  onEditPodcast={(p) => setEditingPodcast(p)} 
+                  onDeletePodcast={handleDeletePodcast} 
                 />
+
+                {/*  Edit forma ispod odabranog podkasta */}
+                {editingPodcast && editingPodcast.id === podcast.id && (
+                  <EditPodcastForm
+                    podcast={editingPodcast}
+                    setPodcasts={setPodcasts}
+                    onClose={() => setEditingPodcast(null)}
+                  />
+                )}
+
+                {episodeFormOpenForPodcastId === podcast.id && (
+                  <div style={{ marginLeft: "20px", marginTop: "10px" }}>
+                    <AddEpisodeForm
+                      podcast={podcast}
+                      onCreated={(newEpisode: any) =>
+                        handleEpisodeCreated(newEpisode, podcast.id)
+                      }
+                      onClose={() => setEpisodeFormOpenForPodcastId(null)}
+                    />
+                  </div>
+                )}
+
                 {selectedPodcastId === podcast.id && (
-                  <div style={{ marginTop: "10px" }}>
+                  <div style={{ marginLeft: "20px", marginTop: "10px" }}>
                     {episodesLoading ? (
                       <IonSpinner name="crescent" />
-                    ) : episodes.length > 0 ? (
-                      episodes.map((ep) => (
+                    ) : episodesList.length > 0 ? (
+                      episodesList.map((ep) => (
                         <EpisodeCard key={ep.id} episode={ep} />
                       ))
                     ) : (
@@ -63,8 +167,12 @@ const MyPodcastsPage: React.FC = () => {
                   </div>
                 )}
               </IonCol>
-            ))}
-          </IonRow>
+            </IonRow>
+          ))}
+
+          {!loading && podcasts.length === 0 && (
+            <IonText>Nema podkasta za prikaz</IonText>
+          )}
         </IonGrid>
       </IonContent>
     </IonPage>

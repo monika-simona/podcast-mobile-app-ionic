@@ -7,12 +7,14 @@ import {
   IonButton,
 } from "@ionic/react";
 import { AuthContext } from "../context/AuthContext";
+import { CiEdit } from "react-icons/ci";
+import { MdOutlineDelete } from "react-icons/md";
 
 export interface Podcast {
   id: number;
   title: string;
   description?: string;
-  author: string; // ostaje string
+  author: string;
   user_id: number;
   cover_image_url?: string;
 }
@@ -22,6 +24,12 @@ interface PodcastCardProps {
   children?: React.ReactNode;
   onViewDetails?: (id: number) => void;
   showEpisodesButton?: boolean;
+  selectedPodcastId?: number | null;
+  onAddEpisode?: (podcastId: number) => void;
+  onEditPodcast?: (podcast: Podcast) => void;
+  onDeletePodcast?: (podcastId: number) => void;
+  isEpisodeFormOpen?: boolean; // DODATO
+  isMyPodcastsPage?: boolean; // DODATO – prikazuje ikone samo tamo
 }
 
 const PodcastCard: React.FC<PodcastCardProps> = ({
@@ -29,19 +37,60 @@ const PodcastCard: React.FC<PodcastCardProps> = ({
   children,
   showEpisodesButton,
   onViewDetails,
+  selectedPodcastId,
+  onAddEpisode,
+  onEditPodcast,
+  onDeletePodcast,
+  isMyPodcastsPage = false,
 }) => {
   const { user } = useContext(AuthContext);
   const isAuthor = user && user.id === podcast.user_id;
 
   return (
     <IonCard
-      button={!showEpisodesButton} // klikabilna na Home
+      button={!showEpisodesButton}
       onClick={
         !showEpisodesButton && onViewDetails
           ? () => onViewDetails(podcast.id)
           : undefined
       }
+      style={{ position: "relative" }}
     >
+      {/* Ikonice u gornjem desnom uglu */}
+      {isMyPodcastsPage && isAuthor && (
+        <div
+          style={{
+            position: "absolute",
+            top: "10px",
+            right: "10px",
+            display: "flex",
+            gap: "10px",
+            zIndex: 10,
+          }}
+        >
+          {onEditPodcast && (
+            <CiEdit
+              size={22}
+              style={{ cursor: "pointer" }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditPodcast(podcast);
+              }}
+            />
+          )}
+          {onDeletePodcast && (
+            <MdOutlineDelete
+              size={22}
+              style={{ cursor: "pointer" }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeletePodcast(podcast.id);
+              }}
+            />
+          )}
+        </div>
+      )}
+
       <IonCardHeader>
         <IonCardTitle>{podcast.title}</IonCardTitle>
         <p>Autor: {podcast.author}</p>
@@ -50,15 +99,35 @@ const PodcastCard: React.FC<PodcastCardProps> = ({
         <p>{podcast.description}</p>
         {children}
         {showEpisodesButton && onViewDetails && (
-          <IonButton
-            fill="outline"
-            onClick={(e) => {
-              e.stopPropagation(); // spreči klik na celu karticu
-              onViewDetails(podcast.id);
-            }}
-          >
-            Prikaži epizode
-          </IonButton>
+          <>
+            <IonButton
+              fill="outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewDetails(podcast.id);
+              }}
+              style={{ marginRight: "10px" }}
+            >
+              {selectedPodcastId === podcast.id
+                ? "Sakrij epizode"
+                : "Prikaži epizode"}
+            </IonButton>
+
+            {onAddEpisode && (
+              <IonButton
+                fill="solid"
+                color="secondary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddEpisode(podcast.id);
+                }}
+              >
+                {selectedPodcastId === podcast.id
+                  ? "Odustani"
+                  : "Dodaj epizodu"}
+              </IonButton>
+            )}
+          </>
         )}
       </IonCardContent>
     </IonCard>

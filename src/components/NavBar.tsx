@@ -47,14 +47,11 @@ const NavBar: React.FC = () => {
       <IonMenu side="start" contentId="main-content">
         <IonContent>
           <IonList>
-            <IonItem button onClick={() => history.push("/home")}>
+            <IonItem button routerLink="/home">
               <IonLabel>Home</IonLabel>
             </IonItem>
-            <IonItem button onClick={() => history.push("/podcasts")}>
-              <IonLabel>Podcasts</IonLabel>
-            </IonItem>
             {user && (
-              <IonItem button onClick={() => history.push("/my-podcasts")}>
+              <IonItem button routerLink="/my-podcasts">
                 <IonLabel>My Podcasts</IonLabel>
               </IonItem>
             )}

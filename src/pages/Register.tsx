@@ -22,11 +22,9 @@ const Register: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
-  const [role, setRole] = useState<"user" | "author">("user"); // default
-
   const handleRegister = async () => {
     try {
-      await register(name, email, password, passwordConfirm, role);
+      await register(name, email, password, passwordConfirm);
       history.push("/login");
     } catch (err) {
       console.error(err);
@@ -73,18 +71,6 @@ const Register: React.FC = () => {
             value={passwordConfirm}
             onIonChange={(e) => setPasswordConfirm(e.detail.value!)}
           />
-        </IonItem>
-
-        <IonItem>
-          <IonLabel position="stacked">Role</IonLabel>
-          <IonSelect
-            value={role}
-            placeholder="Select Role"
-            onIonChange={(e) => setRole(e.detail.value)}
-          >
-            <IonSelectOption value="user">User</IonSelectOption>
-            <IonSelectOption value="author">Creator / Author</IonSelectOption>
-          </IonSelect>
         </IonItem>
 
         <IonButton expand="block" onClick={handleRegister}>

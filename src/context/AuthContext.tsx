@@ -1,11 +1,10 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
-import api from "../api";
+import api from "../api"; // tvoj axios instance
 
 interface User {
   id: number;
   name: string;
   email: string;
-  role: "user" | "author" | "admin";
 }
 
 interface AuthContextType {
@@ -16,7 +15,6 @@ interface AuthContextType {
     email: string,
     password: string,
     password_confirmation: string,
-    role?: "user" | "author"
   ) => Promise<void>;
   logout: () => void;
 }
@@ -34,33 +32,14 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loadingUser, setLoadingUser] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
 
-    if (token) {
+    if (token && storedUser) {
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-        setLoadingUser(false);
-      } else {
-        api
-          .get("/user")
-          .then((res) => {
-            setUser(res.data);
-            localStorage.setItem("user", JSON.stringify(res.data));
-          })
-          .catch(() => {
-            localStorage.removeItem("token");
-            setUser(null);
-          })
-          .finally(() => setLoadingUser(false));
-      }
-    } else {
-      setLoadingUser(false);
+      setUser(JSON.parse(storedUser));
     }
   }, []);
 
@@ -80,15 +59,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     email: string,
     password: string,
     password_confirmation: string,
-    role: "user" | "author" = "user"
   ) => {
     const res = await api.post("/register", {
       name,
       email,
       password,
       password_confirmation,
-      role,
     });
+
     const token = res.data.access_token;
     const userData = res.data.user;
 
@@ -107,7 +85,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{ user, login, register, logout }}>
-      {!loadingUser && children}
+      {children}
     </AuthContext.Provider>
   );
 };
