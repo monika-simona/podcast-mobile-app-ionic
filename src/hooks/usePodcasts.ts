@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import api from "../api";
 
 export interface Podcast {
   id: number;
@@ -28,7 +29,7 @@ export const usePodcasts = (
         if (filterBy === "author") params.user_name = query;
       }
 
-      const res = await axios.get("http://127.0.0.1:8000/api/podcasts", {
+      const res = await api.get("/podcasts", {
         params,
       });
       const data = res.data.data || res.data;
