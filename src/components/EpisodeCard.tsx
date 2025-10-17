@@ -90,7 +90,7 @@ const EpisodeCard: React.FC<EpisodeCardProps> = ({
         )}
 
         {!isCurrent ? (
-          <IonButton onClick={() => playEpisode(episode)}>▶️ Play</IonButton>
+          <IonButton onClick={() => playEpisode(episode)}> ▶ Play</IonButton>
         ) : (
           <IonButton onClick={stopEpisode}>Stop</IonButton>
         )}

@@ -1,5 +1,6 @@
 import React from "react";
 import { useAudioPlayer } from "../context/AudioPlayerContext";
+import { FiPlay, FiPause, FiStopCircle } from "react-icons/fi";
 
 const formatTime = (seconds: number) => {
   const mins = Math.floor(seconds / 60);
@@ -62,11 +63,30 @@ const PlayerShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </div>
 
           <div style={{ display: "flex", gap: "10px", marginTop: "5px" }}>
-            <button onClick={togglePlay} style={{ fontSize: "20px" }}>
-              {isPlaying ? "⏸️" : "▶️"}
+            <button
+              onClick={togglePlay}
+              style={{
+                fontSize: "24px",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#007bff",
+              }}
+            >
+              {isPlaying ? <FiPause /> : <FiPlay />}
             </button>
-            <button onClick={stopEpisode} style={{ fontSize: "20px" }}>
-              ⏹️
+
+            <button
+              onClick={stopEpisode}
+              style={{
+                fontSize: "24px",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#ff4d4f",
+              }}
+            >
+              <FiStopCircle />
             </button>
           </div>
         </div>
